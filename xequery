@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# xequery - Extended equery tool for Gentoo package management
+
+# Copyright (C) 2026 Alexelnet
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+
+
+
+# List all installed packages from a specific repository
+list_pkgs()
+{
+    local repo="$1"
+
+    if [[ -z "$repo" ]]; then
+        echo "Usage: xequery list pkgs <repository-name>"
+        exit 1
+    fi
+
+    for p in /var/db/pkg/*/*; do
+        if [[ -f "$p/repository" ]] && [[ $(<"$p/repository") == "$repo" ]]; then
+            echo "${p#/var/db/pkg/}"
+        fi
+    done
+}
+
+# List all unique "installed" repositories
+list_repos()
+{
+    for f in /var/db/pkg/*/*/repository; do
+        [[ -f "$f" ]] && cat "$f"
+    done | sort -u
+}
+
+show_usage()
+{
+    echo "Usage: xequery <command> [arguments]"
+    echo
+    echo "Commands:"
+    echo "  list pkgs <repo-name>    List all packages from a specified repository"
+    echo "  list repos               List all unique repositories"
+    echo
+    echo "Examples:"
+    echo "  xequery list pkgs gentoo"
+    echo "  xequery list repos"
+}
+
+# Main
+case "$1" in
+    list)
+        case "$2" in
+            pkgs)
+                list_pkgs "$3"
+                ;;
+            repos)
+                list_repos
+                ;;
+            *)
+                echo "Error: Unknown list subcommand '$2'"
+                echo
+                show_usage
+                exit 1
+                ;;
+        esac
+        ;;
+    help|--help|-h)
+        show_usage
+        ;;
+    *)
+        if [[ -n "$1" ]]; then
+            echo "Error: Unknown command '$1'"
+            echo
+        fi
+        show_usage
+        exit 1
+        ;;
+esac
